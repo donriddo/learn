@@ -20,7 +20,17 @@ $args = explode('/', rtrim($_REQUEST['q'], '/'));
 
 switch (strtolower($args[0])) {
     case 'user':
-        require 'controllers/user.php';
+        require 'models/User.php';
+        switch ($_SERVER['REQUEST_METHOD']) {
+            case 'POST':
+                $User = new User($_POST);
+                echo json_encode($User->create());
+                break;
+
+            default:
+                echo json_encode(array("status"=> 400, "message" => "HTTP METHOD NOT SUPPORTED"));
+                break;
+        }
         break;
 
     default:

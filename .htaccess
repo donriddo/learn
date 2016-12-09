@@ -1,3 +1,2 @@
 RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !index\.php$
 RewriteRule ^(.*)$ api/v1/router.php?q=$1 [QSA,NC,L]
