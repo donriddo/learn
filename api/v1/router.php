@@ -26,7 +26,15 @@ switch (strtolower($args[0])) {
                 $User = new User($_POST);
                 echo json_encode($User->create());
                 break;
-
+            case 'PUT':
+                $putData = fopen("php://input", "r");
+                if (empty($putData)) {
+                    echo json_encode(array("status" => 400, "message" => "Body cannot be empty"));
+                }
+                echo json_encode($putData);
+                $User = new User($putData, $args[1]);
+                echo json_encode($User->update());
+                break;
             default:
                 echo json_encode(array("status"=> 400, "message" => "HTTP METHOD NOT SUPPORTED"));
                 break;

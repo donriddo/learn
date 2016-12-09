@@ -22,9 +22,11 @@ $attributes = array(
 //     if(count($current) > 0) $errors[$key] = $current;
 // }
 // echo json_encode($errors);
-if (is_null(1)) {
-    echo "NULL is a NULL";
-} else {
-    echo "NULL isn't a NULL";
-}
+$okay = array(1,2);;
+// echo json_encode($okay);
+// echo json_encode("(".join(array_fill_keys(array_keys($okay), "?"), ',').")");
+echo json_encode(join(array_keys(array('email' => "donriddo", "password" => "don")), ','));
+$ok = "(1,2";
+$ok .= ",3,4,5)";
+// echo json_encode($ok);
 ?>

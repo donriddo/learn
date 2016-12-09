@@ -40,25 +40,21 @@ class User {
         'mobile_number' => array(),
         'address' => array()
     );
-    private $email;
-    private $password;
-    private $last_name;
-    private $first_name;
-    private $mobile_number;
-    private $address;
     private $currentID;
+    private $body = array();
 
     function __construct($body=NULL, $id=NULL) {
+        if (!empty($body)) $this->body = $body;
         if (!is_null($id)) $this->currentID = $id;
-        if ($body && is_array($body)) {
+        if (is_array($body) && !empty($body)) {
             $validated = $this->validate_attributes($body);
             if ($validated === true) {
-                $this->email = $body['email'];
-                $this->password = password_hash($body['password'], PASSWORD_DEFAULT);
-                $this->last_name = $body['last_name'] ?? "";
-                $this->first_name = $body['first_name'] ?? "";
-                $this->mobile_number = $body['mobile_number'] ?? "";
-                $this->address = $body['address'] ?? "";
+                $this->body['email'] = $body['email'];
+                $this->body['password'] = password_hash($body['password'], PASSWORD_DEFAULT);
+                if (isset($body['last_name'])) $this->body['last_name'] = $body['last_name'];
+                if (isset($body['first_name'])) $this->body['first_name'] = $body['first_name'];
+                if (isset($body['mobile_number'])) $this->body['mobile_number'] = $body['mobile_number'];
+                if (isset($body['address'])) $this->body['address'] = $body['address'];
             } else {
                 echo json_encode(array("status" => 400, "message" => "Validation Error has occurred", "errors" => $validated));
                 exit(1);
@@ -79,12 +75,14 @@ class User {
                         global $db;
                         if (isset($attributes[$key])) {
                             try {
-                                $query = "SELECT * FROM learn_user WHERE $key=$attributes[$key]";
+                                $query = "SELECT * FROM learn_user WHERE $key="
+                                . (is_numeric($attributes[$key]) ? $attributes[$key] : "'".$attributes[$key]) ."'";
                                 $stmt = $db->prepare($query);
                                 $stmt->execute();
                                 if (count($stmt->fetchAll()) > 0) $current[$ckey] = ucfirst($key)." already exists";
                             } catch (PDOException $e) {
-
+                                echo $e;
+                                continue;
                             }
 
                         }
@@ -107,22 +105,44 @@ class User {
     }
 
     public function create() {
+        if (empty($this->body)) {
+            echo json_encode(array("status" => 400, "message" => "Body cannot be empty"));
+            exit(1);
+        }
         global $db;
-        $query = "INSERT INTO learn_user (email, password, last_name, first_name, mobile_number, address) VALUES (?,?,?,?,?,?)";
+        $query = "INSERT INTO learn_user (" . join(array_keys($this->body), ',')
+        . ") VALUES (" . join(array_fill_keys(array_keys($this->body), "?"), ',') . ")";
+        echo json_encode($query);
         $stmt = $db->prepare($query);
-        $stmt->execute(array(
-                $this->email,
-                $this->password,
-                $this->last_name,
-                $this->first_name,
-                $this->mobile_number,
-                $this->address
-        ));
-        $query = "SELECT * FROM learn_user WHERE email='$this->email'";
-        echo $query;
+        $stmt->execute(array_values($this->body));
+        $query = "SELECT * FROM learn_user WHERE email='".$this->body['email']."'";
         $stmt = $db->prepare($query);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function read() {
+        global $db;
+        $query = "SELECT * FROM learn_user WHERE user_id=$this->currentID";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function update() {
+        global $db;
+        $query = "UPDATE learn_user SET (";
+        $num_attr = count($this->body);
+        echo json_encode($this->body);
+        foreach ($this->body as $key => $value) {
+            if ($num_attr-- > 1) {
+                $query .= "$key = $value,";
+            } else {
+                $query .= "$key = $value)";
+            }
+        }
+        $query .= "WHERE id=$this->currentID";
+        return $query;
     }
 
 }
