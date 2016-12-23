@@ -48,6 +48,7 @@ if (count($args) > 2) {
             break;
 
         case 'PUT':
+            $query =
             echo json_encode(array("status"=> 200, "message" => "User updated succesfully"));
             break;
 

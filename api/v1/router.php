@@ -26,12 +26,25 @@ switch (strtolower($args[0])) {
                 $User = new User($_POST);
                 echo json_encode($User->create());
                 break;
+            case 'GET':
+                if (count($args) < 2) {
+                    echo json_encode(array("status"=> 400, "message" => "Please provide the id of the user to retrieve as parameter"));
+                    exit(0);
+                }
+                $User = new User([], $args[1]);
+                echo json_encode($User->read());
+                break;
             case 'PUT':
-                $putData = fopen("php://input", "r");
+                if (count($args) < 2) {
+                    echo json_encode(array("status"=> 400, "message" => "Please provide the id of the user to update as parameter"));
+                    exit(0);
+                }
+                parse_str(file_get_contents("php://input"),$putData);
                 if (empty($putData)) {
                     echo json_encode(array("status" => 400, "message" => "Body cannot be empty"));
+                    exit(0);
                 }
-                echo json_encode($putData);
+                // echo json_encode($putData);
                 $User = new User($putData, $args[1]);
                 echo json_encode($User->update());
                 break;

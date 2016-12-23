@@ -49,8 +49,8 @@ class User {
         if (is_array($body) && !empty($body)) {
             $validated = $this->validate_attributes($body);
             if ($validated === true) {
-                $this->body['email'] = $body['email'];
-                $this->body['password'] = password_hash($body['password'], PASSWORD_DEFAULT);
+                if (isset($body['email'])) $this->body['email'] = $body['email'];
+                if (isset($body['password'])) $this->body['password'] = password_hash($body['password'], PASSWORD_DEFAULT);
                 if (isset($body['last_name'])) $this->body['last_name'] = $body['last_name'];
                 if (isset($body['first_name'])) $this->body['first_name'] = $body['first_name'];
                 if (isset($body['mobile_number'])) $this->body['mobile_number'] = $body['mobile_number'];
@@ -69,7 +69,7 @@ class User {
             foreach ($this->attributes[$key] as $ckey => $cvalue) {
                 switch ($ckey) {
                     case 'required':
-                        if (!isset($attributes[$key])) $current[$ckey] = ucfirst($key)." is $ckey";
+                        if (!isset($attributes[$key]) && $_SERVER['REQUEST_METHOD'] === 'POST') $current[$ckey] = ucfirst($key)." is $ckey";
                         break;
                     case 'unique':
                         global $db;
@@ -131,18 +131,23 @@ class User {
 
     public function update() {
         global $db;
-        $query = "UPDATE learn_user SET (";
+        $query = "UPDATE learn_user SET ";
         $num_attr = count($this->body);
-        echo json_encode($this->body);
         foreach ($this->body as $key => $value) {
             if ($num_attr-- > 1) {
-                $query .= "$key = $value,";
+                $query .= "$key=\"$value\",";
             } else {
-                $query .= "$key = $value)";
+                $query .= "$key=\"$value\"";
             }
         }
-        $query .= "WHERE id=$this->currentID";
-        return $query;
+        $query .= " WHERE user_id=$this->currentID";
+        // echo $query;
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $query = "SELECT * FROM learn_user WHERE user_id=$this->currentID";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
 }
